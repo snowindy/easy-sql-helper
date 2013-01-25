@@ -122,7 +122,6 @@ abstract class EasyHelperBase {
         ResourceHolder rHldr = new ResourceHolder();
         try {
             if (reusedConnection != null) {
-                resHolders.add(rHldr);
                 rHldr.connection = reusedConnection;
             } else {
                 if (initter != null) {
@@ -147,8 +146,6 @@ abstract class EasyHelperBase {
         }
         return rHldr;
     }
-
-    protected List<ResourceHolder> resHolders = new ArrayList<ResourceHolder>();
 
     List<ParamsExtractor> paramsExtractors = null;
 
