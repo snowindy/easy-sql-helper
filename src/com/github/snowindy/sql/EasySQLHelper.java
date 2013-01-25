@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -106,6 +107,10 @@ public class EasySQLHelper extends EasyHelperBase {
     public <T> List<T> query(String sql, RowMapper<T> rowMapper) {
         return query(sql, EMPTY_PARAMS, rowMapper);
     }
+    
+    public void queryNoResult(String sql, Object... params) {
+        query(sql, params, null);
+    }
 
     public List<String> queryForStrings(String sql) {
         return queryForStrings(sql, EMPTY_PARAMS);
@@ -172,7 +177,6 @@ public class EasySQLHelper extends EasyHelperBase {
 
     int[] nonSevereSQLExCodesForNextReq;
 
-    @SuppressWarnings("unchecked")
     public <T> List<T> query(String sql, Object[] params, RowMapper<T> rowMapper) {
 
         lastQueryErrorCode = 0;
@@ -207,6 +211,9 @@ public class EasySQLHelper extends EasyHelperBase {
 
             ResultSet rs = rHldr.resSet;
 
+            if (rowMapper == null){
+                return Collections.emptyList();
+            }
             List<T> res = new ArrayList<T>();
             int i = 0;
             try {
