@@ -129,9 +129,6 @@ abstract class EasyHelperBase {
                         connectionAlreadyInitted = true;
 
                         rHldr.connection = initter.initConnection();
-                        if (doReuseConnection) {
-                            reusedConnection = rHldr.connection;
-                        }
                     }
                 } else if (StringUtils.isNotBlank(jndiDS)) {
                     rHldr.connection = SQLUtils.getConnection(jndiDS);
@@ -144,6 +141,10 @@ abstract class EasyHelperBase {
         } catch (Exception e) {
             throw exceptionGenerator.wrap(e);
         }
+        if (doReuseConnection) {
+            reusedConnection = rHldr.connection;
+        }
+
         return rHldr;
     }
 
