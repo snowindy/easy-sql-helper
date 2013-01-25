@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.sql.DataSource;
+
 import com.github.snowindy.sql.ex.MultiResultInSingleObjectQueryException;
 import com.github.snowindy.sql.ex.NoRecordReturnedException;
 
@@ -29,6 +31,13 @@ public class EasySQLHelper extends EasyHelperBase {
 
     public EasySQLHelper(Logger logger, String className, String methodName, String jndiDS) {
         this.jndiDS = jndiDS;
+        this.logger = logger;
+        this.methodName = methodName;
+        this.className = className;
+    }
+    
+    public EasySQLHelper(Logger logger, String className, String methodName, DataSource dataSource) {
+        this.dataSource = dataSource;
         this.logger = logger;
         this.methodName = methodName;
         this.className = className;
