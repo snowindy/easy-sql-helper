@@ -61,10 +61,11 @@ public class SQLUtils {
     public static void rollbackQuietly(Connection conn) {
         try {
             rollback(conn);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
     }
 
-    public static void rollbackSRE(Connection conn) {
+    public static void rollbackRE(Connection conn) {
         try {
             rollback(conn);
         } catch (Exception e) {
@@ -128,7 +129,7 @@ public class SQLUtils {
         }
     }
 
-    public static void clearBatch(Statement stmt) throws SQLException {
+    public static void cleanUpBatch(Statement stmt) throws SQLException {
         String methodName = "cleanUpStatement(Statement)";
         if (stmt != null) {
             try {
@@ -225,9 +226,23 @@ public class SQLUtils {
         return sql;
     }
 
-    public static void cleanUpStatementBatch(PreparedStatement pstm) throws SQLException {
-        clearBatch(pstm);
-        cleanUpStatement(pstm);
+    public static void cleanUpStatementBatchQuietly(PreparedStatement pstm) {
+        try {
+            cleanUpStatementBatch(pstm);
+        } catch (Exception e) {
+        }
+    }
 
+    public static void cleanUpStatementBatchRE(PreparedStatement pstm) {
+        try {
+            cleanUpStatementBatch(pstm);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void cleanUpStatementBatch(PreparedStatement pstm) throws SQLException {
+        cleanUpBatch(pstm);
+        cleanUpStatement(pstm);
     }
 }
