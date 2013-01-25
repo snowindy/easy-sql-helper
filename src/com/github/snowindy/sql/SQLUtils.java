@@ -76,7 +76,9 @@ public class SQLUtils {
     public static void rollback(Connection conn) throws Exception {
         final String methodName = "rollback";
         try {
-            conn.rollback();
+            if (conn != null){
+                conn.rollback();   
+            }
         } catch (Exception sqle) {
             logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during transaction rollback.", sqle);
             throw sqle;
