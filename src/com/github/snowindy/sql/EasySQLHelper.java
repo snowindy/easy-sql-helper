@@ -359,7 +359,7 @@ public class EasySQLHelper extends EasyHelperBase {
         lastQueryOrUpdate = sql;
         lastQueryOrUpdateParams = params;
 
-        ResourceHolder rHldr = new ResourceHolder();
+        ResourceHolder rHldr = null;
         try {
             rHldr = obtainConnection(connInitter);
 
@@ -412,9 +412,11 @@ public class EasySQLHelper extends EasyHelperBase {
                     "\nError occured when tried to execute update: " + SQLLogUtils.getLogStr(sql, params), e);
             throw exceptionGenerator.wrap(e);
         } finally {
-            rHldr.cleanUpStatement();
-            if (reusedConnection == null) {
-                rHldr.cleanUpDatabaseConnection();
+            if (rHldr != null) {
+                rHldr.cleanUpStatement();
+                if (reusedConnection == null) {
+                    rHldr.cleanUpDatabaseConnection();
+                }
             }
         }
     }
