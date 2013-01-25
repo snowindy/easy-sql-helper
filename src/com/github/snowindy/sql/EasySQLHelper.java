@@ -35,7 +35,7 @@ public class EasySQLHelper extends EasyHelperBase {
         this.methodName = methodName;
         this.className = className;
     }
-    
+
     public EasySQLHelper(Logger logger, String className, String methodName, DataSource dataSource) {
         this.dataSource = dataSource;
         this.logger = logger;
@@ -116,7 +116,7 @@ public class EasySQLHelper extends EasyHelperBase {
     public <T> List<T> query(String sql, RowMapper<T> rowMapper) {
         return query(sql, EMPTY_PARAMS, rowMapper);
     }
-    
+
     public void queryNoResult(String sql, Object... params) {
         query(sql, params, null);
     }
@@ -195,7 +195,7 @@ public class EasySQLHelper extends EasyHelperBase {
         lastQueryOrUpdate = sql;
         lastQueryOrUpdateParams = params;
 
-        ResourceHolder rHldr = new ResourceHolder();
+        ResourceHolder rHldr = null;
         try {
             rHldr = obtainConnection(connInitter);
 
@@ -220,7 +220,7 @@ public class EasySQLHelper extends EasyHelperBase {
 
             ResultSet rs = rHldr.resSet;
 
-            if (rowMapper == null){
+            if (rowMapper == null) {
                 return Collections.emptyList();
             }
             List<T> res = new ArrayList<T>();
@@ -283,10 +283,12 @@ public class EasySQLHelper extends EasyHelperBase {
 
         } finally {
             nonSevereSQLExCodesForNextReq = null;
-            rHldr.cleanUpResultSet();
-            rHldr.cleanUpStatement();
-            if (reusedConnection == null) {
-                rHldr.cleanUpDatabaseConnection();
+            if (rHldr != null) {
+                rHldr.cleanUpResultSet();
+                rHldr.cleanUpStatement();
+                if (reusedConnection == null) {
+                    rHldr.cleanUpDatabaseConnection();
+                }
             }
         }
     }
@@ -586,5 +588,4 @@ public class EasySQLHelper extends EasyHelperBase {
     public BigDecimal queryForBigDecimal(String sql, List params) {
         return queryForBigDecimal(sql, params.toArray());
     }
-
 }
