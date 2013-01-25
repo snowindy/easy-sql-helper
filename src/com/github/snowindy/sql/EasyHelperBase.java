@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -148,16 +148,17 @@ abstract class EasyHelperBase {
         return rHldr;
     }
 
-    protected List<ResourceHolder> resHolders = new LinkedList<ResourceHolder>();
+    protected List<ResourceHolder> resHolders = new ArrayList<ResourceHolder>();
 
     List<ParamsExtractor> paramsExtractors = null;
 
     public void addParamsExtractor(ParamsExtractor paramsExtractor) {
         if (paramsExtractors == null) {
-            paramsExtractors = new LinkedList<ParamsExtractor>();
+            paramsExtractors = new ArrayList<ParamsExtractor>();
         }
         paramsExtractors.add(paramsExtractor);
     }
 
     protected ConnInitter connInitter;
+    
 }
