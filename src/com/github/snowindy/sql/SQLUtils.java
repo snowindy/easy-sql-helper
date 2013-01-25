@@ -58,6 +58,30 @@ public class SQLUtils {
 
     }
 
+    public static void rollbackQuietly(Connection conn) {
+        try {
+            rollback(conn);
+        } catch (Exception e) {}
+    }
+
+    public static void rollbackSRE(Connection conn) {
+        try {
+            rollback(conn);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void rollback(Connection conn) throws Exception {
+        final String methodName = "rollback";
+        try {
+            conn.rollback();
+        } catch (Exception sqle) {
+            logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during transaction rollback.", sqle);
+            throw sqle;
+        }
+    }
+
     public static void cleanUpDatabaseConnection(Connection conn) throws SQLException {
         String methodName = "cleanUpDatabaseConnection(Connection)";
         if (conn != null) {
