@@ -9,143 +9,155 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.sql.DataSource;
+
+import org.apache.commons.lang3.StringUtils;
+
 abstract class EasyHelperBase {
-	protected class ResourceHolder {
-		Connection connection;
+    protected class ResourceHolder {
+        Connection connection;
 
-		PreparedStatement pstm;
+        PreparedStatement pstm;
 
-		ResultSet resSet;
+        ResultSet resSet;
 
-		protected void cleanUpDatabaseConnection() {
-			EasyHelperBase.this.cleanUpDatabaseConnection(connection);
-		}
+        protected void cleanUpDatabaseConnection() {
+            EasyHelperBase.this.cleanUpDatabaseConnection(connection);
+        }
 
-		protected void cleanUpResultSet() {
-			try {
-				SQLUtils.cleanUpResultSet(resSet);
-			} catch (Exception e) {
-			}
-		}
+        protected void cleanUpResultSet() {
+            try {
+                SQLUtils.cleanUpResultSet(resSet);
+            } catch (Exception e) {
+            }
+        }
 
-		protected void cleanUpStatement() {
-			try {
-				SQLUtils.cleanUpStatement(pstm);
-			} catch (Exception e) {
-			}
-		}
+        protected void cleanUpStatement() {
+            try {
+                SQLUtils.cleanUpStatement(pstm);
+            } catch (Exception e) {
+            }
+        }
 
-		public void cleanUpStatementBatch() {
-			try {
-				SQLUtils.cleanUpStatementBatch(pstm);
-			} catch (Exception e) {
-			}
-		}
-	}
+        public void cleanUpStatementBatch() {
+            try {
+                SQLUtils.cleanUpStatementBatch(pstm);
+            } catch (Exception e) {
+            }
+        }
+    }
 
-	protected void cleanUpDatabaseConnection(Connection connection) {
-		try {
-			SQLUtils.cleanUpDatabaseConnection(connection);
-		} catch (Exception e) {
-			throw exceptionGenerator.wrap(e);
-		}
-	}
+    protected void cleanUpDatabaseConnection(Connection connection) {
+        try {
+            SQLUtils.cleanUpDatabaseConnection(connection);
+        } catch (Exception e) {
+            throw exceptionGenerator.wrap(e);
+        }
+    }
 
-	protected ExceptionGenerator exceptionGenerator = defaultExceptionGenerator;
+    protected ExceptionGenerator exceptionGenerator = defaultExceptionGenerator;
 
-	static ExceptionGenerator defaultExceptionGenerator = new ExceptionGenerator() {
+    static ExceptionGenerator defaultExceptionGenerator = new ExceptionGenerator() {
 
-		public RuntimeException wrap(Exception e) throws RuntimeException {
-			throw new RuntimeException(e);
-		}
-	};
+        public RuntimeException wrap(Exception e) throws RuntimeException {
+            throw new RuntimeException(e);
+        }
+    };
 
-	protected void reuseConnection(Connection connection) {
-		reusedConnection = connection;
-		reuseConnection();
-	}
+    protected void reuseConnection(Connection connection) {
+        reusedConnection = connection;
+        reuseConnection();
+    }
 
-	/**
-	 * You have to call {@code closeReusedResources()} in finally statement if you have called {@code reuseConnection()
+    /**
+     * You have to call {@code closeReusedResources()} in finally statement if
+     * you have called {@code reuseConnection()
 	 * }.
-	 * 
-	 */
-	public void reuseConnection() {
-		doReuseConnection = true;
-	}
+     * 
+     */
+    public void reuseConnection() {
+        doReuseConnection = true;
+    }
 
-	protected boolean doReuseConnection;
+    protected boolean doReuseConnection;
 
-	/**
-	 * You must call {@code closeReusedResources()} in finally statement if you have called {@code reuseConnection() }.
-	 * 
-	 * @throws SQLException
-	 * 
-	 */
-	public void closeResources() {
-		try {
-			if (reusedConnection != null) {
-				cleanUpDatabaseConnection(reusedConnection);
-			}
-		} catch (Exception e) {
-			throw exceptionGenerator.wrap(e);
-		}
-	}
+    /**
+     * You must call {@code closeReusedResources()} in finally statement if you
+     * have called {@code reuseConnection() }.
+     * 
+     * @throws SQLException
+     * 
+     */
+    public void closeResources() {
+        try {
+            if (reusedConnection != null) {
+                cleanUpDatabaseConnection(reusedConnection);
+            }
+        } catch (Exception e) {
+            throw exceptionGenerator.wrap(e);
+        }
+    }
 
-	protected Connection reusedConnection;
+    protected Connection reusedConnection;
 
-	protected String jndiDS;
+    protected String jndiDS;
 
-	protected Logger logger;
+    protected DataSource dataSource;
 
-	protected String className;
+    protected Logger logger;
 
-	protected String methodName;
+    protected String className;
 
-	protected void logSQL(Level lev, String sql, Object[] params) {
-		if (logger.isLoggable(lev)) {
-			logger.logp(lev, className, methodName, SQLLogUtils.getLogStr(sql, params));
-		}
-	}
+    protected String methodName;
 
-	protected boolean connectionAlreadyInitted = false;
+    protected void logSQL(Level lev, String sql, Object[] params) {
+        if (logger.isLoggable(lev)) {
+            logger.logp(lev, className, methodName, SQLLogUtils.getLogStr(sql, params));
+        }
+    }
 
-	protected ResourceHolder obtainConnection(ConnInitter initter) {
-		ResourceHolder rHldr = new ResourceHolder();
-		try {
-			if (reusedConnection != null) {
-				resHolders.add(rHldr);
-				rHldr.connection = reusedConnection;
-			} else {
-				if (initter != null) {
-					if (!connectionAlreadyInitted) {
-						connectionAlreadyInitted = true;
+    protected boolean connectionAlreadyInitted = false;
 
-						rHldr.connection = initter.initConnection();
-						if (doReuseConnection) {
-							reusedConnection = rHldr.connection;
-						}
-					}
-				} else {
-					rHldr.connection = SQLUtils.getConnection(jndiDS);
-				}
-			}
-		} catch (Exception e) {
-			throw exceptionGenerator.wrap(e);
-		}
-		return rHldr;
-	}
+    protected ResourceHolder obtainConnection(ConnInitter initter) {
+        ResourceHolder rHldr = new ResourceHolder();
+        try {
+            if (reusedConnection != null) {
+                resHolders.add(rHldr);
+                rHldr.connection = reusedConnection;
+            } else {
+                if (initter != null) {
+                    if (!connectionAlreadyInitted) {
+                        connectionAlreadyInitted = true;
 
-	protected List<ResourceHolder> resHolders = new LinkedList<ResourceHolder>();
+                        rHldr.connection = initter.initConnection();
+                        if (doReuseConnection) {
+                            reusedConnection = rHldr.connection;
+                        }
+                    }
+                } else if (StringUtils.isNotBlank(jndiDS)) {
+                    rHldr.connection = SQLUtils.getConnection(jndiDS);
+                } else if (dataSource != null) {
+                    rHldr.connection = dataSource.getConnection();
+                } else {
+                    throw new RuntimeException("Cannot find a way to create new connection.");
+                }
+            }
+        } catch (Exception e) {
+            throw exceptionGenerator.wrap(e);
+        }
+        return rHldr;
+    }
 
-	List<ParamsExtractor> paramsExtractors = null;
+    protected List<ResourceHolder> resHolders = new LinkedList<ResourceHolder>();
 
-	public void addParamsExtractor(ParamsExtractor paramsExtractor) {
-		if (paramsExtractors == null) {
-			paramsExtractors = new LinkedList<ParamsExtractor>();
-		}
-		paramsExtractors.add(paramsExtractor);
-	}
+    List<ParamsExtractor> paramsExtractors = null;
 
-	protected ConnInitter connInitter;
+    public void addParamsExtractor(ParamsExtractor paramsExtractor) {
+        if (paramsExtractors == null) {
+            paramsExtractors = new LinkedList<ParamsExtractor>();
+        }
+        paramsExtractors.add(paramsExtractor);
+    }
+
+    protected ConnInitter connInitter;
 }
