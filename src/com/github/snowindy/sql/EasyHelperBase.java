@@ -160,6 +160,9 @@ abstract class EasyHelperBase {
 
     private static String COMMIT_ROLLBACK_MSG = "EasySqlHelper cannot commit or rollback in non-reuseConnection mode.";
 
+    /**
+     * Commits and closes resources.
+     */
     public void commit() {
         if (reusedConnection == null) {
             throw new IllegalStateException(COMMIT_ROLLBACK_MSG);
@@ -169,13 +172,22 @@ abstract class EasyHelperBase {
         } catch (Exception e) {
             logger.logp(Level.SEVERE, className, methodName, "Cannot commit.", e);
             throw new RuntimeException(e);
+        } finally {
+            closeResources();
         }
     }
 
+    /**
+     * Rollbacks and closes resources.
+     */
     public void rollback() {
         if (reusedConnection == null) {
             throw new IllegalStateException(COMMIT_ROLLBACK_MSG);
         }
-        SQLUtils.rollbackRE(reusedConnection);
+        try {
+            SQLUtils.rollbackRE(reusedConnection);
+        } finally {
+            closeResources();
+        }
     }
 }
