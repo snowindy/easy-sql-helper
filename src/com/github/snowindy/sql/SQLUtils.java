@@ -36,7 +36,7 @@ public class SQLUtils {
     }
 
     private static void freeDatabaseResources(ResultSet rs, Statement stmt, Connection conn) throws SQLException {
-        String methodName = "freeDatabaseResources(ResultSet, Statement, Connection)";
+        String methodName = "freeDatabaseResources";
         try {
             cleanUpResultSet(rs);
         } catch (SQLException sqle) {
@@ -76,8 +76,8 @@ public class SQLUtils {
     public static void rollback(Connection conn) throws Exception {
         final String methodName = "rollback";
         try {
-            if (conn != null){
-                conn.rollback();   
+            if (conn != null) {
+                conn.rollback();
             }
         } catch (Exception sqle) {
             logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during transaction rollback.", sqle);
@@ -98,9 +98,6 @@ public class SQLUtils {
                     }
 
                     conn.close();
-                    if (logger.isLoggable(Level.FINER)) {
-                        logger.finer("\nConnection has been closed [ID] = " + conn.hashCode());
-                    }
                 }
                 conn = null;
             } catch (SQLException sqle) {
@@ -179,9 +176,6 @@ public class SQLUtils {
      */
     public static Connection getConnection(String dataSourceName) throws NamingException, SQLException {
         String methodName = "getConnection(String)";
-        if (logger.isLoggable(Level.FINER)) {
-            logger.entering(CLASS_NAME, methodName, "\n[DATASOURCE_NAME] = '" + dataSourceName + "'");
-        }
 
         Connection connection = null;
 
@@ -196,10 +190,6 @@ public class SQLUtils {
             throw e;
         }
 
-        if (logger.isLoggable(Level.FINER)) {
-            logger.exiting(CLASS_NAME, methodName, "\nConnection has been created [ID] = '" + connection.hashCode()
-                    + "'");
-        }
         return connection;
     }
 
