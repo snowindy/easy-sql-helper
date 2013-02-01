@@ -164,6 +164,17 @@ abstract class EasyHelperBase {
     /**
      * Commits and closes resources.
      */
+    public void commitAndClose() {
+        try {
+            commit();
+        } finally {
+            closeResources();
+        }
+    }
+
+    /**
+     * Commits connection, does not close resources.
+     */
     public void commit() {
         if (reusedConnection == null) {
             throw new IllegalStateException(COMMIT_ROLLBACK_MSG);
@@ -173,22 +184,28 @@ abstract class EasyHelperBase {
         } catch (Exception e) {
             logger.logp(Level.SEVERE, className, methodName, "Cannot commit.", e);
             throw new RuntimeException(e);
-        } finally {
-            closeResources();
         }
     }
 
     /**
      * Rollbacks and closes resources.
      */
+    public void rollbackAndClose() {
+        try {
+            rollback();
+        } finally {
+            closeResources();
+        }
+    }
+
+    /**
+     * Rollbacks connection, does not closes resources.
+     */
     public void rollback() {
         if (reusedConnection == null) {
             throw new IllegalStateException(COMMIT_ROLLBACK_MSG);
         }
-        try {
-            SQLUtils.rollbackRE(reusedConnection);
-        } finally {
-            closeResources();
-        }
+
+        SQLUtils.rollbackRE(reusedConnection);
     }
 }
