@@ -6,12 +6,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 abstract class EasyHelperBase {
     protected class ResourceHolder {
@@ -110,9 +110,13 @@ abstract class EasyHelperBase {
 
     protected String methodName;
 
-    protected void logSQL(Level lev, String sql, Object[] params) {
-        if (logger.isLoggable(lev)) {
-            logger.logp(lev, className, methodName, SQLLogUtils.getLogStr(sql, params));
+    protected void logSQL(boolean isDebug, String sql, Object[] params) {
+        if (isDebug) {
+            if (logger.isDebugEnabled()) {
+                logger.debug(SQLLogUtils.getLogStr(sql, params));
+            }
+        } else {
+            logger.error(SQLLogUtils.getLogStr(sql, params));
         }
     }
 
@@ -182,7 +186,7 @@ abstract class EasyHelperBase {
         try {
             reusedConnection.commit();
         } catch (Exception e) {
-            logger.logp(Level.SEVERE, className, methodName, "Cannot commit.", e);
+            logger.error("Cannot commit.", e);
             throw new RuntimeException(e);
         }
     }

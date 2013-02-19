@@ -13,10 +13,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.sql.DataSource;
+
+import org.slf4j.Logger;
 
 import com.github.snowindy.sql.ex.MultiResultInSingleObjectQueryException;
 import com.github.snowindy.sql.ex.NoRecordReturnedException;
@@ -29,18 +29,16 @@ import com.github.snowindy.sql.ex.NoRecordReturnedException;
  */
 public class EasySQLHelper extends EasyHelperBase {
 
-    public EasySQLHelper(Logger logger, String className, String methodName, String jndiDS) {
+    public EasySQLHelper(Logger logger, String methodName, String jndiDS) {
         this.jndiDS = jndiDS;
         this.logger = logger;
         this.methodName = methodName;
-        this.className = className;
     }
 
-    public EasySQLHelper(Logger logger, String className, String methodName, DataSource dataSource) {
+    public EasySQLHelper(Logger logger, String methodName, DataSource dataSource) {
         this.dataSource = dataSource;
         this.logger = logger;
         this.methodName = methodName;
-        this.className = className;
     }
 
     /**
@@ -66,7 +64,7 @@ public class EasySQLHelper extends EasyHelperBase {
         this.className = className;
     }
 
-    public int[] updateBatch(String sql, List<? extends Object> list, ParamsForBatchExtractor paramExtractor) {
+    public int[] updateBatch(String sql, List<?> list, ParamsForBatchExtractor paramExtractor) {
         lastQueryOrUpdate = sql;
         lastQueryOrUpdateParams = null;
 
@@ -74,9 +72,8 @@ public class EasySQLHelper extends EasyHelperBase {
         try {
             rHldr = obtainConnection(connInitter);
 
-            if (logger.isLoggable(Level.FINER)) {
-                logger.logp(Level.FINER, className, methodName, SQLLogUtils.getLogStr(sql, null)
-                        + "[Batch objects count] = [ " + list.size() + " ]");
+            if (logger.isDebugEnabled()) {
+                logger.debug("{} [Batch objects count] = [ {} ]", SQLLogUtils.getLogStr(sql, null), list.size());
             }
 
             rHldr.pstm = rHldr.connection.prepareStatement(sql);
@@ -87,23 +84,22 @@ public class EasySQLHelper extends EasyHelperBase {
             }
 
             long start = 0;
-            if (logger.isLoggable(Level.FINER)) {
+            if (logger.isDebugEnabled()) {
                 start = System.currentTimeMillis();
             }
 
             int[] res = rHldr.pstm.executeBatch();
 
-            if (logger.isLoggable(Level.FINER)) {
+            if (logger.isDebugEnabled()) {
                 long end = System.currentTimeMillis();
-                logger.logp(Level.FINER, className, methodName, "Batch update executed in " + ((end - start) / 1000.0)
-                        + " seconds.\n[SQL Rows affected count] = " + Arrays.asList(res));
+                logger.debug("Batch update executed in {} seconds.\n[SQL Rows affected count] = {}",
+                        ((end - start) / 1000.0), Arrays.asList(res));
             }
 
             return res;
         } catch (Exception e) {
-            logger.log(Level.SEVERE,
-                    "\nError occured when tried to execute update: " + SQLLogUtils.getLogStr(sql, null)
-                            + "[Batch objects count] = [ " + list.size() + " ]", e);
+            logger.error("\nError occured when tried to execute update: {} [Batch objects count] = [ {} ]",
+                    SQLLogUtils.getLogStr(sql, null), list.size(), e);
             throw exceptionGenerator.wrap(e);
         } finally {
             rHldr.cleanUpStatementBatch();
@@ -134,7 +130,7 @@ public class EasySQLHelper extends EasyHelperBase {
         });
     }
 
-    public List<String> queryForStrings(String sql, List params) {
+    public List<String> queryForStrings(String sql, List<?> params) {
         return queryForStrings(sql, params.toArray());
     }
 
@@ -142,7 +138,7 @@ public class EasySQLHelper extends EasyHelperBase {
         return query(sql, new Object[] { param }, rowMapper);
     }
 
-    public ResultRow queryForOneResultRow(final String sql, List params) {
+    public ResultRow queryForOneResultRow(final String sql, List<?> params) {
         return queryForOneResultRow(sql, params.toArray());
     }
 
@@ -160,13 +156,13 @@ public class EasySQLHelper extends EasyHelperBase {
             throw new NoRecordReturnedException(sql, params);
         }
         ResultRow res = lst.get(0);
-        if (logger.isLoggable(Level.FINER)) {
-            logger.logp(Level.FINER, className, methodName, "\nQuery for one row result: " + res);
+        if (logger.isDebugEnabled()) {
+            logger.debug("\nQuery for one row result: {}", res);
         }
         return res;
     }
 
-    public <T> List<T> query(String sql, List params, RowMapper<T> rowMapper) {
+    public <T> List<T> query(String sql, List<?> params, RowMapper<T> rowMapper) {
         return query(sql, params.toArray(), rowMapper);
     }
 
@@ -199,23 +195,22 @@ public class EasySQLHelper extends EasyHelperBase {
         try {
             rHldr = obtainConnection(connInitter);
 
-            logSQL(Level.FINER, sql, params);
+            logSQL(true, sql, params);
 
             rHldr.pstm = rHldr.connection.prepareStatement(sql);
 
             setParameters(rHldr.pstm, params);
 
             long start = 0;
-            if (logger.isLoggable(Level.FINER)) {
+            if (logger.isDebugEnabled()) {
                 start = System.currentTimeMillis();
             }
 
             rHldr.resSet = rHldr.pstm.executeQuery();
 
-            if (logger.isLoggable(Level.FINER)) {
+            if (logger.isDebugEnabled()) {
                 long end = System.currentTimeMillis();
-                logger.logp(Level.FINER, className, methodName, "Query executed in " + ((end - start) / 1000.0)
-                        + " seconds.");
+                logger.debug("Query executed in {} seconds.", ((end - start) / 1000.0));
             }
 
             ResultSet rs = rHldr.resSet;
@@ -235,17 +230,17 @@ public class EasySQLHelper extends EasyHelperBase {
             } catch (Exception e) {
                 // When exception occurs try to pring result set row values.
                 try {
-                    logger.logp(Level.SEVERE, className, methodName, SQLLogUtils.printResultSetRowContents(rs));
+                    logger.error(SQLLogUtils.printResultSetRowContents(rs));
                 } catch (Exception ex) {
-                    logger.logp(Level.SEVERE, className, methodName, "\nCannot create result set row detalization.", ex);
+                    logger.error("\nCannot create result set row detalization.", ex);
                 }
                 throw e;
             }
 
             lastResSetIterationCount = i;
 
-            if (logger.isLoggable(Level.FINER)) {
-                logger.log(Level.FINER, "\n[SQL Query result count (RS iterations = " + i + ")] = " + res.size());
+            if (logger.isDebugEnabled()) {
+                logger.debug("\n[SQL Query result count (RS iterations = {})] = {}", i, res.size());
             }
 
             return res;
@@ -264,12 +259,8 @@ public class EasySQLHelper extends EasyHelperBase {
             }
 
             if (nonSevereSQLEx) {
-                logger.logp(
-                        Level.FINER,
-                        className,
-                        methodName,
-                        "\nExpected exception occured when tried to execute query: "
-                                + SQLLogUtils.getLogStr(sql, params), e.getMessage());
+                logger.debug("\nExpected exception occured when tried to execute query: {}. {}",
+                        SQLLogUtils.getLogStr(sql, params), e.getMessage());
             } else {
                 logQueryException(e, sql, params);
             }
@@ -298,8 +289,7 @@ public class EasySQLHelper extends EasyHelperBase {
     }
 
     private void logQueryException(Exception e, String sql, Object[] params) {
-        logger.logp(Level.SEVERE, className, methodName,
-                "\nError occured when tried to execute query: " + SQLLogUtils.getLogStr(sql, params), e);
+        logger.error("\nError occured when tried to execute query: {}", SQLLogUtils.getLogStr(sql, params), e);
     }
 
     private void setParameters(PreparedStatement pstm, Object[] params) {
@@ -363,7 +353,7 @@ public class EasySQLHelper extends EasyHelperBase {
         try {
             rHldr = obtainConnection(connInitter);
 
-            logSQL(Level.FINER, sql, params);
+            logSQL(true, sql, params);
 
             if (useGeneratedKey) {
                 rHldr.pstm = rHldr.connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -374,7 +364,7 @@ public class EasySQLHelper extends EasyHelperBase {
             setParameters(rHldr.pstm, params);
 
             long start = 0;
-            if (logger.isLoggable(Level.FINER)) {
+            if (logger.isDebugEnabled()) {
                 start = System.currentTimeMillis();
             }
 
@@ -386,19 +376,18 @@ public class EasySQLHelper extends EasyHelperBase {
                 throw e;
             }
 
-            if (logger.isLoggable(Level.FINER)) {
+            if (logger.isDebugEnabled()) {
                 long end = System.currentTimeMillis();
-                logger.logp(Level.FINER, className, methodName, "Update executed in " + ((end - start) / 1000.0)
-                        + " seconds.\n[SQL Rows affected count] = " + res);
+                logger.debug("Update executed in {} seconds.\n[SQL Rows affected count] = {}",
+                        ((end - start) / 1000.0), res);
             }
 
             if (useGeneratedKey) {
                 ResultSet generatedKeys = rHldr.pstm.getGeneratedKeys();
                 if (generatedKeys.next()) {
                     generatedKey = String.valueOf(generatedKeys.getObject(1));
-                    if (logger.isLoggable(Level.FINER)) {
-                        logger.logp(Level.FINER, className, methodName,
-                                String.format("Generated key is '%s'.", generatedKey));
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Generated key is '{}'.", generatedKey);
                     }
                 } else {
                     throw new SQLException(String.format(
@@ -408,8 +397,7 @@ public class EasySQLHelper extends EasyHelperBase {
 
             return res;
         } catch (Exception e) {
-            logger.log(Level.SEVERE,
-                    "\nError occured when tried to execute update: " + SQLLogUtils.getLogStr(sql, params), e);
+            logger.error("\nError occured when tried to execute update: {}", SQLLogUtils.getLogStr(sql, params), e);
             throw exceptionGenerator.wrap(e);
         } finally {
             if (rHldr != null) {
@@ -491,10 +479,10 @@ public class EasySQLHelper extends EasyHelperBase {
             } else if (param.getClass().isEnum()) {
                 prstmt.setString(index, String.valueOf(param));
             } else {
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.logp(Level.FINEST, className, methodName,
-                            "\nParameter type is not recognized ('toString' is used): object class = "
-                                    + param.getClass().getName() + "\nobject = " + param);
+                if (logger.isTraceEnabled()) {
+                    logger.trace(
+                            "\nParameter type is not recognized ('toString' is used): object class = {} \nobject = {}",
+                            param.getClass().getName(), param);
                 }
                 prstmt.setString(index, param.toString());
             }
@@ -513,7 +501,6 @@ public class EasySQLHelper extends EasyHelperBase {
         return queryForObject(sql, new Object[] { param }, rowMapper);
     }
 
-    @SuppressWarnings("unchecked")
     public <T> T queryForObject(String sql, Object[] params, RowMapper<T> rowMapper) {
         List<T> res = query(sql, params, rowMapper);
         if (res.isEmpty()) {
@@ -523,13 +510,13 @@ public class EasySQLHelper extends EasyHelperBase {
             throw new MultiResultInSingleObjectQueryException(SQLLogUtils.getLogStr(sql, params));
         }
 
-        if (logger.isLoggable(Level.FINER)) {
-            logger.logp(Level.FINER, className, methodName, "\n[SQL Query for <Type> result] = " + res);
+        if (logger.isDebugEnabled()) {
+            logger.debug("\n[SQL Query for <Type> result] = {}", res);
         }
         return res.get(0);
     }
 
-    public <T> T queryForObject(String sql, List params, RowMapper<T> rowMapper) {
+    public <T> T queryForObject(String sql, List<?> params, RowMapper<T> rowMapper) {
         return queryForObject(sql, params.toArray(), rowMapper);
     }
 

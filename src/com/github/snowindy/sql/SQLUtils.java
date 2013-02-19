@@ -7,19 +7,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class SQLUtils {
 
-    private final static String CLASS_NAME = SQLUtils.class.getName();
-
-    private final static Logger logger = Logger.getLogger(CLASS_NAME);
+    private final static Logger logger = LoggerFactory.getLogger(SQLUtils.class);
 
     private static final Map<String, DataSource> cachedDataSources = new ConcurrentHashMap<String, DataSource>();
 
@@ -36,23 +35,23 @@ public class SQLUtils {
     }
 
     private static void freeDatabaseResources(ResultSet rs, Statement stmt, Connection conn) throws SQLException {
-        String methodName = "freeDatabaseResources";
+
         try {
             cleanUpResultSet(rs);
         } catch (SQLException sqle) {
-            logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during ResultSet close!", sqle);
+            logger.error("\nError occured during ResultSet close!", sqle);
         }
 
         try {
             cleanUpStatement(stmt);
         } catch (SQLException sqle) {
-            logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during PreparedStatement close!", sqle);
+            logger.error("\nError occured during PreparedStatement close!", sqle);
         }
 
         try {
             cleanUpDatabaseConnection(conn);
         } catch (SQLException sqle) {
-            logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during Connection close!", sqle);
+            logger.error("\nError occured during Connection close!", sqle);
             throw sqle;
         }
 
@@ -74,34 +73,33 @@ public class SQLUtils {
     }
 
     public static void rollback(Connection conn) throws Exception {
-        final String methodName = "rollback";
+
         try {
             if (conn != null) {
                 conn.rollback();
             }
         } catch (Exception sqle) {
-            logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during transaction rollback.", sqle);
+            logger.error("\nError occured during transaction rollback.", sqle);
             throw sqle;
         }
     }
 
     public static void cleanUpDatabaseConnection(Connection conn) throws SQLException {
-        String methodName = "cleanUpDatabaseConnection(Connection)";
+
         if (conn != null) {
             try {
                 if (!conn.isClosed()) {
                     try {
                         conn.clearWarnings();
                     } catch (SQLException sqle) {
-                        logger.logp(Level.SEVERE, CLASS_NAME, methodName,
-                                "\nError occured during Connection warning clear!", sqle);
+                        logger.error("\nError occured during Connection warning clear!", sqle);
                     }
 
                     conn.close();
                 }
                 conn = null;
             } catch (SQLException sqle) {
-                logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during Connection close!", sqle);
+                logger.error("\nError occured during Connection close!", sqle);
                 throw sqle;
             }
         }
@@ -109,51 +107,49 @@ public class SQLUtils {
     }
 
     public static void cleanUpResultSet(ResultSet rset) throws SQLException {
-        String methodName = "cleanUpResultSet(ResultSet)";
+
         if (rset != null) {
             try {
                 try {
                     rset.clearWarnings();
                 } catch (SQLException sqle) {
-                    logger.logp(Level.SEVERE, CLASS_NAME, methodName,
-                            "\nError occured during ResultSet warning clear!", sqle);
+                    logger.error("\nError occured during ResultSet warning clear!", sqle);
                 }
 
                 rset.close();
                 rset = null;
             } catch (SQLException sqle) {
-                logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during ResultSet close!", sqle);
+                logger.error("\nError occured during ResultSet close!", sqle);
                 throw sqle;
             }
         }
     }
 
     public static void cleanUpBatch(Statement stmt) throws SQLException {
-        String methodName = "cleanUpStatement(Statement)";
+
         if (stmt != null) {
             try {
                 stmt.clearBatch();
             } catch (SQLException sqle) {
-                logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during Statement Batch clear!", sqle);
+                logger.error("\nError occured during Statement Batch clear!", sqle);
             }
         }
     }
 
     public static void cleanUpStatement(Statement stmt) throws SQLException {
-        String methodName = "cleanUpStatement(Statement)";
+
         if (stmt != null) {
             try {
                 try {
                     stmt.clearWarnings();
                 } catch (SQLException sqle) {
-                    logger.logp(Level.SEVERE, CLASS_NAME, methodName,
-                            "\nError occured during Statement warning clear!", sqle);
+                    logger.error("\nError occured during Statement warning clear!", sqle);
                 }
 
                 stmt.close();
                 stmt = null;
             } catch (SQLException sqle) {
-                logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during Statement close!", sqle);
+                logger.error("\nError occured during Statement close!", sqle);
                 throw sqle;
             }
         }
@@ -175,18 +171,15 @@ public class SQLUtils {
      * Getting connection to a database
      */
     public static Connection getConnection(String dataSourceName) throws NamingException, SQLException {
-        String methodName = "getConnection(String)";
-
         Connection connection = null;
 
         try {
             connection = createConnection(dataSourceName);
         } catch (NamingException e) {
-            logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nDataSource not found with name = " + dataSourceName
-                    + "'", e);
+            logger.error("\nDataSource not found with name = " + dataSourceName + "'", e);
             throw e;
         } catch (SQLException e) {
-            logger.logp(Level.SEVERE, CLASS_NAME, methodName, "\nError occured during connection create!", e);
+            logger.error("\nError occured during connection create!", e);
             throw e;
         }
 
