@@ -11,7 +11,6 @@ import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 abstract class EasyHelperBase {
     protected class ResourceHolder {
@@ -105,8 +104,6 @@ abstract class EasyHelperBase {
     protected DataSource dataSource;
 
     protected Logger logger;
-
-    protected String className;
 
     protected String methodName;
 

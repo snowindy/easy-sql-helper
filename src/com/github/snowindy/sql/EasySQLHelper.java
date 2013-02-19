@@ -50,18 +50,16 @@ public class EasySQLHelper extends EasyHelperBase {
      * @param logger
      * @param connection
      */
-    public EasySQLHelper(Logger logger, String className, String methodName, Connection connection) {
+    public EasySQLHelper(Logger logger, String methodName, Connection connection) {
         this.logger = logger;
         this.methodName = methodName;
-        this.className = className;
         reuseConnection(connection);
     }
 
-    public EasySQLHelper(Logger logger, String className, String methodName, ConnInitter initter) {
+    public EasySQLHelper(Logger logger, String methodName, ConnInitter initter) {
         this.logger = logger;
         this.connInitter = initter;
         this.methodName = methodName;
-        this.className = className;
     }
 
     public int[] updateBatch(String sql, List<?> list, ParamsForBatchExtractor paramExtractor) {
